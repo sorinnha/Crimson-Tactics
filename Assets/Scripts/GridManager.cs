@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 // holds the grid state and answers whether a cell can be walked on
@@ -14,7 +13,8 @@ public class GridManager : MonoBehaviour
     [Tooltip("Leave empty to automatically grab it from the ObstacleManager in the scene.")]
     public ObstacleData obstacleData;
 
-    private readonly HashSet<Vector2Int> occupiedCells = new HashSet<Vector2Int>();
+    // The board itself lives in a plain C# object so the rules can be tested without Unity.
+    public GridState State { get; private set; }
 
     void Awake()
     {
@@ -25,42 +25,16 @@ public class GridManager : MonoBehaviour
             ObstacleManager manager = FindFirstObjectByType<ObstacleManager>();
             if (manager != null) obstacleData = manager.obstacleData;
         }
+
+        State = new GridState(gridSizeX, gridSizeZ, obstacleData != null ? obstacleData.gridObstacles : null);
     }
 
-    public bool IsInsideGrid(int x, int z)
-    {
-        return x >= 0 && x < gridSizeX && z >= 0 && z < gridSizeZ;
-    }
-
-    // same layout used in ObstacleManager and ObstacleEditor
-    private int ToIndex(int x, int z)
-    {
-        return z * gridSizeX + x;
-    }
-
-    public bool IsObstacle(int x, int z)
-    {
-        if (obstacleData == null) return false;
-        int index = ToIndex(x, z);
-        if (index < 0 || index >= obstacleData.gridObstacles.Length) return false;
-        return obstacleData.gridObstacles[index];
-    }
-
-    public bool IsWalkable(int x, int z)
-    {
-        if (!IsInsideGrid(x, z)) return false;
-        if (IsObstacle(x, z)) return false;
-        if (occupiedCells.Contains(new Vector2Int(x, z))) return false;
-        return true;
-    }
-
-    public bool IsOccupied(int x, int z)
-    {
-        return occupiedCells.Contains(new Vector2Int(x, z));
-    }
-
-    public void SetOccupied(int x, int z) { occupiedCells.Add(new Vector2Int(x, z)); }
-    public void SetFree(int x, int z) { occupiedCells.Remove(new Vector2Int(x, z)); }
+    public bool IsInsideGrid(int x, int z) { return State.IsInsideGrid(x, z); }
+    public bool IsObstacle(int x, int z) { return State.IsObstacle(x, z); }
+    public bool IsWalkable(int x, int z) { return State.IsWalkable(x, z); }
+    public bool IsOccupied(int x, int z) { return State.IsOccupied(x, z); }
+    public void SetOccupied(int x, int z) { State.SetOccupied(x, z); }
+    public void SetFree(int x, int z) { State.SetFree(x, z); }
 
     public Vector3 CellToWorld(int x, int z, float y)
     {

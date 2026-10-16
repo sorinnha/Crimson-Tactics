@@ -15,16 +15,22 @@ public class ObstacleManager : MonoBehaviour
     
     void CreateObstacles()
     {
-        // for loop to go through the grid
-        for (int x = 0; x < 10; x++)
+        // why: read the board size from GridManager instead of assuming 10x10, so obstacles and
+        // pathfinding always agree on where the blocked cells are (they share the z * sizeX + x layout)
+        GridManager grid = FindFirstObjectByType<GridManager>();
+        int sizeX = grid != null ? grid.gridSizeX : 10;
+        int sizeZ = grid != null ? grid.gridSizeZ : 10;
+
+        for (int x = 0; x < sizeX; x++)
         {
-            for (int z = 0; z < 10; z++)
+            for (int z = 0; z < sizeZ; z++)
             {
-                int arrayPosition = z * 10 + x; // calculate array position cuz we are using a 1D array to store obstacles
-                bool hasObstacle = obstacleData.gridObstacles[arrayPosition]; // checks from obstacleData(scriptable object) if there is an obstacle at that position
-                if (hasObstacle == true)// if true spawn the obstacle
+                int arrayPosition = z * sizeX + x; // 1D array: row by row
+                if (arrayPosition >= obstacleData.gridObstacles.Length) continue; // data smaller than the grid
+
+                if (obstacleData.gridObstacles[arrayPosition]) // checks from obstacleData (scriptable object)
                 {
-                    Vector3 spawnPosition = new Vector3(x, y, z); 
+                    Vector3 spawnPosition = new Vector3(x, y, z);
                     GameObject newObstacle = Instantiate(obstaclePrefab, spawnPosition, Quaternion.identity);
                     newObstacle.name = "Obstacle: " + x + ", " + z;
                 }

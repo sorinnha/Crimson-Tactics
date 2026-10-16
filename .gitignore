@@ -35,3 +35,7 @@
 # OS junk
 .DS_Store
 Thumbs.db
+
+# .NET test/check builds
+tools/**/bin/
+tools/**/obj/

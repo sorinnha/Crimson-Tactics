@@ -12,7 +12,9 @@ public static class Pathfinder
         new Vector2Int(0, -1),
     };
 
-    public static List<Vector2Int> FindPath(Vector2Int start, Vector2Int goal, GridManager grid)
+    // A* on a 4-connected grid with unit step cost. Returns the cells to walk, start excluded and goal
+    // included; empty when start == goal or the goal can't be reached.
+    public static List<Vector2Int> FindPath(Vector2Int start, Vector2Int goal, GridState grid)
     {
         List<Vector2Int> result = new List<Vector2Int>();
 
@@ -83,7 +85,7 @@ public static class Pathfinder
     // manhattan distance
     private static int Heuristic(Vector2Int a, Vector2Int b)
     {
-        return Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y);
+        return System.Math.Abs(a.x - b.x) + System.Math.Abs(a.y - b.y);
     }
 
     private static List<Vector2Int> Retrace(Node goalNode)

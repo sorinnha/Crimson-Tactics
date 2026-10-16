@@ -24,11 +24,15 @@ public class GameController : MonoBehaviour
 
     public bool IsGameOver { get; private set; }
 
-    public void GameOver()
+    // Why the game ended, shown under "GAME OVER".
+    public string Reason { get; private set; } = "";
+
+    public void GameOver(string reason)
     {
         if (IsGameOver) return;
         IsGameOver = true;
-        Debug.Log("GAME OVER - the enemy caught the player!");
+        Reason = reason;
+        Debug.Log("GAME OVER - " + reason);
     }
 
     void Update()
@@ -66,7 +70,7 @@ public class GameController : MonoBehaviour
         };
         small.normal.textColor = Color.white;
         GUI.Label(new Rect(0, Screen.height * 0.5f + 10, Screen.width, 40),
-            "The enemy caught you!", small);
+            Reason, small);
         GUI.Label(new Rect(0, Screen.height * 0.5f + 50, Screen.width, 40),
             "Press R to play again", small);
     }

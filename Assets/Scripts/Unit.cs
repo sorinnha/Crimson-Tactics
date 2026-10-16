@@ -61,9 +61,13 @@ public abstract class Unit : MonoBehaviour
         return true;
     }
 
+    // How many cells the last MoveAlongPath really walked (it stops early if a cell gets blocked).
+    public int StepsWalked { get; private set; }
+
     // walk the whole path, stop if a cell gets blocked on the way
     protected IEnumerator MoveAlongPath(List<Vector2Int> path)
     {
+        StepsWalked = 0;
         if (path == null || path.Count == 0) yield break;
 
         IsMoving = true;
@@ -71,6 +75,7 @@ public abstract class Unit : MonoBehaviour
         {
             if (!IsStepClear(step)) break;
             yield return StepTo(step);
+            StepsWalked++;
         }
         IsMoving = false;
 

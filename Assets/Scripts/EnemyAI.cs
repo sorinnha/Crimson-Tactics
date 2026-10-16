@@ -8,14 +8,6 @@ public class EnemyAI : Unit, IAI
     private PlayerUnit player;
     private int moveBudget;
 
-    private static readonly Vector2Int[] Around =
-    {
-        new Vector2Int(1, 0),
-        new Vector2Int(-1, 0),
-        new Vector2Int(0, 1),
-        new Vector2Int(0, -1),
-    };
-
     protected override void Start()
     {
         base.Start();
@@ -40,28 +32,27 @@ public class EnemyAI : Unit, IAI
         StartCoroutine(TakeTurn(moveBudget));
     }
 
+    // How far the enemy walked on its last turn (the QA probe checks it never beats the player's).
+    public int LastSteps { get; private set; }
+
     private IEnumerator TakeTurn(int maxSteps)
     {
-        if (player != null && !IsAdjacentTo(player.Cell))
+        LastSteps = 0;
+        if (player != null)
         {
-            Vector2Int? target = PickClosestTileNextToPlayer();
-            if (target != null)
+            // the plan comes from TurnRules, which the tests check over thousands of boards
+            List<Vector2Int> plan = TurnRules.PlanEnemyTurn(Grid.State, Cell, player.Cell, maxSteps);
+            foreach (Vector2Int step in plan)
             {
-                List<Vector2Int> path = Pathfinder.FindPath(Cell, target.Value, Grid);
-                int steps = Mathf.Min(maxSteps, path.Count);
-
-                for (int i = 0; i < steps; i++)
-                {
-                    if (!IsStepClear(path[i])) break;
-                    yield return StepOnce(path[i]);
-                    if (IsAdjacentTo(player.Cell)) break;
-                }
+                if (!IsStepClear(step)) break;
+                yield return StepOnce(step);
+                LastSteps++;
             }
         }
 
         // standing next to the player means we caught them
-        if (player != null && IsAdjacentTo(player.Cell))
-            GameController.Instance.GameOver();
+        if (player != null && TurnRules.IsAdjacent(Cell, player.Cell))
+            GameController.Instance.GameOver("The enemy caught you!");
         else
             EndTurn();
     }
@@ -69,35 +60,5 @@ public class EnemyAI : Unit, IAI
     private void EndTurn()
     {
         if (player != null) player.BeginTurn();
-    }
-
-    // closest reachable tile next to the player
-    private Vector2Int? PickClosestTileNextToPlayer()
-    {
-        Vector2Int? best = null;
-        int bestLength = int.MaxValue;
-
-        foreach (Vector2Int offset in Around)
-        {
-            Vector2Int cell = player.Cell + offset;
-            if (!Grid.IsWalkable(cell.x, cell.y)) continue;
-
-            List<Vector2Int> path = Pathfinder.FindPath(Cell, cell, Grid);
-            if (path.Count == 0) continue;
-
-            if (path.Count < bestLength)
-            {
-                bestLength = path.Count;
-                best = cell;
-            }
-        }
-
-        return best;
-    }
-
-    private bool IsAdjacentTo(Vector2Int cell)
-    {
-        int distance = Mathf.Abs(Cell.x - cell.x) + Mathf.Abs(Cell.y - cell.y);
-        return distance == 1;
     }
 }

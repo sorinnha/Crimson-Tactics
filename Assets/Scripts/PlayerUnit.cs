@@ -6,10 +6,14 @@ public class PlayerUnit : Unit
 {
     // tells the enemy how many tiles we moved so it gets the same amount
     public event System.Action<int> TurnEnded;
+    // our turn has begun (the QA probe checks the board here, when nothing is moving)
+    public event System.Action TurnStarted;
 
     private bool isMyTurn = true;
-    private int lastMoveDistance;
     private TileInfo highlightedTile;
+
+    // True when a click (or the QA bot) may give an order: our turn, nothing moving, game still on.
+    public bool CanAct => isMyTurn && !IsMoving && Grid != null && !GameController.Instance.IsGameOver;
 
     protected override void Start()
     {
@@ -22,11 +26,7 @@ public class PlayerUnit : Unit
 
     void Update()
     {
-        if (GameController.Instance.IsGameOver) return;
-
-        if (Grid == null || IsMoving || !isMyTurn) return;
-
-        if (Input.GetMouseButtonDown(0))
+        if (CanAct && Input.GetMouseButtonDown(0))
             TryMoveToClickedTile();
     }
 
@@ -40,14 +40,21 @@ public class PlayerUnit : Unit
         TileInfo tile = hit.collider.GetComponent<TileInfo>();
         if (tile == null) return;
 
-        Vector2Int goal = new Vector2Int(tile.tileX, tile.tileZ);
+        if (TryMoveTo(new Vector2Int(tile.tileX, tile.tileZ)))
+            HighlightTarget(tile);
+    }
 
-        List<Vector2Int> path = Pathfinder.FindPath(Cell, goal, Grid);
-        if (path.Count == 0) return;
+    // The one way to give the player an order: a click ends up here, and so does the QA bot.
+    // Returns false if it isn't our turn or the tile can't be reached.
+    public bool TryMoveTo(Vector2Int goal)
+    {
+        if (!CanAct) return false;
 
-        lastMoveDistance = path.Count;
-        HighlightTarget(tile);
+        List<Vector2Int> path = Pathfinder.FindPath(Cell, goal, Grid.State);
+        if (path.Count == 0) return false;
+
         StartCoroutine(MoveAlongPath(path));
+        return true;
     }
 
     private void HighlightTarget(TileInfo tile)
@@ -66,11 +73,21 @@ public class PlayerUnit : Unit
         }
 
         isMyTurn = false;
-        TurnEnded?.Invoke(lastMoveDistance);
+        // why: the steps really walked, not the planned path length. A path can stop early when a cell
+        // gets blocked, and the enemy must not get more moves than the player actually made.
+        TurnEnded?.Invoke(StepsWalked);
     }
 
     public void BeginTurn()
     {
+        // why: with no free tile next to us, no click can ever end the turn and the game would hang.
+        if (!TurnRules.HasAnyMove(Grid.State, Cell))
+        {
+            GameController.Instance.GameOver("You're trapped: no tile left to move to!");
+            return;
+        }
+
         isMyTurn = true;
+        TurnStarted?.Invoke();
     }
 }
