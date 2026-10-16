@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Compiles the QA Lab integration (Assets/QA, with QALAB defined) and the game scripts it calls,
+    against stubs of Unity and of QA Lab's API.   dotnet build tools/compile-check-qa
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>9</LangVersion>
+    <Nullable>disable</Nullable>
+    <OutputType>Library</OutputType>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <DefineConstants>$(DefineConstants);QALAB</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="QALabApiStubs.cs" />
+    <Compile Include="../compile-check/UnityApiStubs.cs" Link="Stubs/UnityApiStubs.cs" />
+    <Compile Include="../rules-tests/UnityStubs.cs" Link="Stubs/Vector2Int.cs" />
+    <Compile Include="../../Assets/Scripts/**/*.cs" Link="Scripts/%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="../../Assets/QA/*.cs" Link="QA/%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
+  </ItemGroup>
+</Project>

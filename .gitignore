@@ -39,3 +39,4 @@ Thumbs.db
 # .NET test/check builds
 tools/**/bin/
 tools/**/obj/
+!tools/**/*.csproj

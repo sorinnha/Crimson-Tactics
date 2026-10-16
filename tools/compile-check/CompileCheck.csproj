@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Compiles the game's runtime scripts (Assets/Scripts) against UnityApiStubs.cs, so CI catches compile
+    errors without Unity. It compiles; it doesn't run anything. Behaviour is tested in tools/rules-tests.
+      dotnet build tools/compile-check
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>9</LangVersion>
+    <Nullable>disable</Nullable>
+    <OutputType>Library</OutputType>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="UnityApiStubs.cs" />
+    <Compile Include="../rules-tests/UnityStubs.cs" Link="Stubs/Vector2Int.cs" />
+    <Compile Include="../../Assets/Scripts/**/*.cs" Link="Scripts/%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>
