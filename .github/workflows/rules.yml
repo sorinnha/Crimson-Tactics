@@ -1,0 +1,22 @@
+name: rules
+
+# The game's rules and scripts, checked without Unity: compile checks against API stubs, and the
+# EditMode tests (pathfinding vs BFS, the enemy's turn, invariants, 2,000 simulated matches).
+on:
+  push:
+  pull_request:
+
+jobs:
+  rules:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: compile the game scripts (Unity API stubs)
+        run: dotnet build tools/compile-check -c Release
+      - name: compile the QA Lab integration (QALAB defined)
+        run: dotnet build tools/compile-check-qa -c Release
+      - name: rules tests (the same files Unity's Test Runner runs)
+        run: dotnet test tools/rules-tests -c Release --logger "console;verbosity=normal"
